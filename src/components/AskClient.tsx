@@ -99,8 +99,8 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
 
       {/* Chat area */}
       <section className="mx-auto mt-6 flex w-full max-w-xl flex-1 flex-col gap-4 px-4 pb-56">
-        <Bubble side="left">Your Identity
-          Hey! 👋 Type anything you&apos;d like to ask — about faith, leadership, life, calling…  is never recorded or revealed.
+        <Bubble side="left">
+          Hey! 👋 Type anything you&apos;d like to ask — about faith, leadership, life, calling…  Your Identity is never recorded or revealed.
         </Bubble>
         {sent.map((s, i) => (
           <div key={s.at + "-" + i} className="flex flex-col items-end gap-1 animate-pop">
