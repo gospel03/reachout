@@ -30,8 +30,6 @@ export interface SocialLink {
 
 // ✏️  Replace these with your real pages. Remove any you don't use.
 export const SOCIALS: SocialLink[] = [
-  { kind: "instagram", label: "Instagram", handle: "@reachoutministries", url: "https://instagram.com/reachoutministries" },
-  { kind: "youtube", label: "YouTube", handle: "Reachout Ministries Intl.", url: "https://youtube.com/@reachoutministries" },
-  { kind: "facebook", label: "Facebook", handle: "Reachout Ministries Intl.", url: "https://facebook.com/reachoutministries" },
-  { kind: "website", label: "Website", handle: "reachoutministries.org", url: "https://reachoutministries.org" },
+  { kind: "youtube", label: "YouTube", handle: "@ReachOutMedia96", url: "https://www.youtube.com/@ReachOutMedia96" },
+  { kind: "instagram", label: "Instagram", handle: "@reachoutmedia96", url: "https://www.instagram.com/reachoutmedia96/" },
 ];

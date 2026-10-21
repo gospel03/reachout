@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MinistryLogo } from "./Brand";
 
 interface Variant { id: number; text: string; status: string; createdAt: string; }
@@ -52,6 +52,14 @@ export default function AdminClient({ defaultPassword }: { defaultPassword: bool
   }, [load]);
 
   const flash = (m: string) => { setToast(m); setTimeout(() => setToast(""), 1800); };
+  async function copy(text: string, msg = "📋 Copied") {
+    try { await navigator.clipboard.writeText(text); }
+    catch {
+      const t = document.createElement("textarea");
+      t.value = text; document.body.appendChild(t); t.select(); document.execCommand("copy"); t.remove();
+    }
+    flash(msg);
+  }
 
   async function setStatus(ids: number[], status: string) {
     await fetch("/api/admin/questions", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ids, status }) });
@@ -114,6 +122,43 @@ export default function AdminClient({ defaultPassword }: { defaultPassword: bool
   }, [groups, filter, sort, search]);
 
   const onScreenText = screen?.mode === "question" ? screen.text : null;
+  const isLive = (g: Group) => onScreenText !== null && (g.text === onScreenText || g.variants.some((v) => v.text === onScreenText));
+  // Queue = open questions: starred first, then most asked
+  const queue = useMemo(
+    () => groups.filter((g) => (g.status === "new" || g.status === "starred") && !isLive(g))
+      .sort((a, b) => Number(b.status === "starred") - Number(a.status === "starred") || b.count - a.count),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [groups, onScreenText],
+  );
+  async function showNext() {
+    const cur = groups.find(isLive);
+    if (cur) await setStatus(cur.ids, "answered");
+    if (!queue.length) return pushScreen({ mode: "welcome" }, "No more questions 🎉");
+    showQuestion(queue[0].text, queue[0].count);
+  }
+
+  // New-question alert + tab title
+  const prevOpen = useRef<number | null>(null);
+  useEffect(() => {
+    document.title = `(${counts.open}) Q&A · LEAD NEXT`;
+    if (loaded && prevOpen.current !== null && counts.open > prevOpen.current) flash(`🔔 ${counts.open - prevOpen.current} new question(s)`);
+    if (loaded) prevOpen.current = counts.open;
+  }, [counts.open, loaded]);
+
+  // Keyboard shortcuts: N next · W QR · S socials · B blank
+  useEffect(() => {
+    const h = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement;
+      if (/INPUT|TEXTAREA|SELECT/.test(t.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (k === "n") showNext();
+      else if (k === "w") pushScreen({ mode: "welcome" }, "QR slide on screen");
+      else if (k === "s") pushScreen({ mode: "socials" }, "Socials on screen");
+      else if (k === "b") pushScreen({ mode: "blank" }, "Screen blanked");
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  });
 
   return (
     <main className="min-h-screen bg-[#050f22] text-white">
@@ -133,6 +178,7 @@ export default function AdminClient({ defaultPassword }: { defaultPassword: bool
           </button>
           <a href="/display" target="_blank" className="rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/15">Open screen ↗</a>
           <a href="/api/qr" target="_blank" className="rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/15">QR image ↓</a>
+          <button onClick={() => copy(queue.concat(groups.filter(isLive)).map((g, i) => `${i + 1}. ${g.text}${g.count > 1 ? ` (×${g.count})` : ""}`).join("\n"), "📋 Open questions copied")} className="rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/15">Copy all open</button>
           <button onClick={exportCsv} className="rounded-full bg-white/10 px-4 py-2 text-sm hover:bg-white/15">Export CSV</button>
           <button
             onClick={async () => { await fetch("/api/admin/login", { method: "DELETE" }); window.location.reload(); }}
@@ -236,6 +282,7 @@ export default function AdminClient({ defaultPassword }: { defaultPassword: bool
                       {g.variants.map((v) => (
                         <li key={v.id} className="group flex items-start gap-2 text-sm text-white/75">
                           <span className="flex-1">“{v.text}”</span>
+                          <button onClick={() => copy(v.text)} className="shrink-0 text-xs text-sky-300 opacity-70 hover:opacity-100">copy</button>
                           <button onClick={() => showQuestion(v.text, g.count)} className="shrink-0 text-xs text-sky-300 opacity-70 hover:opacity-100">show this</button>
                           <button onClick={() => remove([v.id])} className="shrink-0 text-xs text-red-300 opacity-50 hover:opacity-100">delete</button>
                         </li>
@@ -252,6 +299,7 @@ export default function AdminClient({ defaultPassword }: { defaultPassword: bool
                     ) : (
                       <>
                         <Btn primary onClick={() => showQuestion(g.text, g.count)}>📺 Show on screen</Btn>
+                        <Btn onClick={() => copy(g.text)}>📋 Copy</Btn>
                         <Btn onClick={() => setEditing({ key: g.key, text: g.text })}>✏️ Edit &amp; show</Btn>
                         {g.status === "starred" ? (
                           <Btn onClick={() => setStatus(g.ids, "new")}>☆ Unstar</Btn>
@@ -293,6 +341,15 @@ export default function AdminClient({ defaultPassword }: { defaultPassword: bool
               <ModeBtn active={screen?.mode === "socials"} onClick={() => pushScreen({ mode: "socials" }, "Socials on screen")}>🌐 Socials</ModeBtn>
               <ModeBtn active={screen?.mode === "blank"} onClick={() => pushScreen({ mode: "blank" }, "Screen blanked")}>⬛ Blank</ModeBtn>
             </div>
+            <button
+              onClick={showNext}
+              className="mt-2 w-full rounded-xl bg-gradient-to-r from-sky-glow to-blue-600 py-2.5 text-sm font-semibold text-white active:scale-[0.99]"
+            >
+              ⏭ Next question ({queue.length} waiting) <span className="opacity-70">· N</span>
+            </button>
+            {screen?.mode === "question" && screen.text && (
+              <button onClick={() => copy(screen.text!)} className="mt-2 w-full rounded-xl bg-white/10 py-2 text-sm font-semibold hover:bg-white/15">📋 Copy on-screen text</button>
+            )}
             {screen?.mode === "question" && (
               <button
                 onClick={() => {
@@ -326,8 +383,10 @@ export default function AdminClient({ defaultPassword }: { defaultPassword: bool
           </div>
 
           <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-xs leading-relaxed text-white/60">
-            <h2 className="mb-2 font-semibold uppercase tracking-[0.25em] text-white/50">FreeShow tip</h2>
-            Add a <b>Website</b> item in FreeShow pointing to <code className="text-sky-300">/display</code> (or <code className="text-sky-300">/display?bg=transparent</code> to overlay on your own background). It updates live when you click “Show on screen”.
+            <h2 className="mb-2 font-semibold uppercase tracking-[0.25em] text-white/50">FreeShow / NDI</h2>
+            <b>Easiest:</b> click 📋 Copy, paste into a FreeShow slide.<br />
+            <b>Live overlay:</b> in OBS add a <i>Browser</i> source with <code className="text-sky-300">/display?bg=transparent</code> (1920×1080), then send OBS to FreeShow with the OBS NDI plugin (see README).<br />
+            <b>Shortcuts:</b> N next · W QR · S socials · B blank
           </div>
 
           <button onClick={clearAll} className="w-full rounded-xl border border-red-400/30 py-2 text-xs text-red-300 hover:bg-red-500/10">

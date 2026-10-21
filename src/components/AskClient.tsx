@@ -6,6 +6,13 @@ import { LeadNextWordmark, MinistryLogo, SocialIcon } from "./Brand";
 
 interface Sent { text: string; at: number; }
 const STORE_KEY = "leadnext-my-questions";
+const IDEAS = [
+  "How do I know God's calling for my life?",
+  "How can I lead when I feel unqualified?",
+  "How do I stay strong in faith at college or work?",
+  "What does it mean to be a young leader?",
+  "How do I handle doubts about my faith?",
+];
 
 export default function AskClient({ socials, maxLength }: { socials: SocialLink[]; maxLength: number }) {
   const [text, setText] = useState("");
@@ -14,6 +21,7 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
   const [error, setError] = useState("");
   const [justSent, setJustSent] = useState(false);
   const [accepting, setAccepting] = useState(true);
+  const [idea, setIdea] = useState(0);
   const endRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -29,7 +37,8 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
         .catch(() => {});
     check();
     const t = setInterval(check, 15000);
-    return () => clearInterval(t);
+    const r = setInterval(() => setIdea((i) => (i + 1) % IDEAS.length), 3500);
+    return () => { clearInterval(t); clearInterval(r); };
   }, []);
 
   useEffect(() => {
@@ -67,26 +76,29 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
   }
 
   return (
-    <main className="bg-scene relative flex min-h-[100dvh] flex-col">
+    <main className="bg-scene relative isolate flex min-h-[100dvh] flex-col overflow-x-hidden">
+      <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden" aria-hidden>
+        <div className="orb orb-1" /><div className="orb orb-2" /><div className="orb orb-3" />
+      </div>
       {/* Header */}
       <header className="flex items-center justify-between px-5 pt-5">
-        <MinistryLogo className="h-10" />
-        <span className="rounded-full border border-sky-glow/40 bg-sky-glow/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-200">
+        <MinistryLogo className="h-14" />
+        <span className="rounded-full border border-sky-glow/40 bg-sky-glow/10 px-4 py-1.5 text-sm font-semibold uppercase tracking-[0.18em] text-sky-200">
           {EVENT.kicker}
         </span>
       </header>
 
       <section className="mt-6 flex flex-col items-center px-6 text-center animate-rise">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.35em] text-white/70">{EVENT.tagline}</p>
-        <div className="mt-3"><LeadNextWordmark size="md" /></div>
-        <h1 className="mt-5 text-xl font-bold">Got a question? Ask it here.</h1>
-        <p className="mt-1 flex items-center gap-1.5 text-sm text-white/70">
+        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/80">{EVENT.tagline}</p>
+        <div className="mt-3"><div className="animate-bob"><LeadNextWordmark size="lg" /></div></div>
+        <h1 className="shimmer mt-6 text-3xl font-extrabold">Got a question? Ask it here.</h1>
+        <p className="mt-2 flex items-center gap-1.5 text-base text-white/80">
           <LockIcon /> 100% anonymous — no name, no login.
         </p>
       </section>
 
       {/* Chat area */}
-      <section className="mx-auto mt-6 flex w-full max-w-lg flex-1 flex-col gap-3 px-4 pb-48">
+      <section className="mx-auto mt-6 flex w-full max-w-xl flex-1 flex-col gap-4 px-4 pb-56">
         <Bubble side="left">
           Hey! 👋 Type anything you&apos;d like to ask — about faith, leadership, life, calling… Only the organisers can see it.
         </Bubble>
@@ -104,11 +116,11 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
             <div className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-gradient-to-br from-sky-glow to-blue-600 text-2xl shadow-lg shadow-sky-500/30">
               🙌
             </div>
-            <h2 className="mt-3 text-lg font-bold">Question received!</h2>
-            <p className="mt-1 text-sm text-white/70">Keep an eye on the screen — it might be picked next.</p>
+            <h2 className="mt-3 text-2xl font-bold">Question received!</h2>
+            <p className="mt-1 text-base text-white/80">Keep an eye on the screen — it might be picked next.</p>
             <button
               onClick={askAnother}
-              className="mt-4 w-full rounded-2xl bg-white py-3 font-semibold text-[#06142b] transition active:scale-[0.98]"
+              className="mt-4 w-full rounded-2xl bg-white py-4 text-lg font-semibold text-[#06142b] transition active:scale-[0.98]"
             >
               Ask another question
             </button>
@@ -138,7 +150,7 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
       {/* Composer */}
       {!justSent && (
         <div className="fixed inset-x-0 bottom-0 z-10 bg-gradient-to-t from-[#06142b] via-[#06142b]/95 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-8">
-          <div className="mx-auto max-w-lg">
+          <div className="mx-auto max-w-xl">
             {!accepting ? (
               <div className="glass rounded-3xl p-4 text-center text-sm text-white/80">
                 ⏸️ Questions are paused right now. Please check back in a bit!
@@ -146,7 +158,7 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
             ) : (
               <>
                 {error && <p className="mb-2 rounded-xl bg-red-500/20 px-3 py-2 text-sm text-red-100">{error}</p>}
-                <div className="glass flex items-end gap-2 rounded-3xl p-2 pl-4 shadow-2xl shadow-black/40">
+                <div className="glass flex items-end gap-2 rounded-3xl p-2.5 pl-5 shadow-2xl shadow-black/40">
                   <textarea
                     ref={inputRef}
                     value={text}
@@ -155,14 +167,14 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
                       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); submit(); }
                     }}
                     rows={Math.min(5, Math.max(1, Math.ceil(text.length / 34)))}
-                    placeholder="Type your question…"
-                    className="max-h-40 flex-1 resize-none bg-transparent py-2.5 text-base text-white placeholder:text-white/40 focus:outline-none"
+                    placeholder={IDEAS[idea]}
+                    className="max-h-40 flex-1 resize-none bg-transparent py-3 text-lg text-white placeholder:text-white/45 focus:outline-none"
                   />
                   <button
                     onClick={submit}
                     disabled={busy || text.trim().length < 3}
                     aria-label="Send"
-                    className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-glow to-blue-600 text-white shadow-lg shadow-sky-500/30 transition active:scale-95 disabled:opacity-40"
+                    className={`grid h-14 w-14 shrink-0 place-items-center rounded-full bg-gradient-to-br from-sky-glow to-blue-600 text-white shadow-lg shadow-sky-500/30 transition active:scale-95 disabled:opacity-40 ${text.trim().length >= 3 && !busy ? "pulse-ring" : ""}`}
                   >
                     {busy ? (
                       <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white" />
@@ -171,7 +183,7 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
                     )}
                   </button>
                 </div>
-                <p className="mt-2 text-center text-[11px] text-white/40">
+                <p className="mt-2 text-center text-xs text-white/55">
                   {text.length}/{maxLength} · Your identity is never recorded
                 </p>
               </>
@@ -185,11 +197,11 @@ export default function AskClient({ socials, maxLength }: { socials: SocialLink[
 
 function Bubble({ side, children }: { side: "left" | "right"; children: React.ReactNode }) {
   return side === "left" ? (
-    <div className="glass max-w-[85%] self-start rounded-3xl rounded-bl-md px-4 py-3 text-[15px] leading-relaxed text-white/90">
+    <div className="glass max-w-[85%] self-start rounded-3xl rounded-bl-md px-4 py-3 text-[18px] leading-relaxed text-white/90">
       {children}
     </div>
   ) : (
-    <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-3xl rounded-br-md bg-gradient-to-br from-sky-glow to-blue-600 px-4 py-3 text-[15px] leading-relaxed text-white shadow-lg shadow-sky-500/20">
+    <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-3xl rounded-br-md bg-gradient-to-br from-sky-glow to-blue-600 px-5 py-3.5 text-[18px] leading-relaxed text-white shadow-lg shadow-sky-500/20">
       {children}
     </div>
   );
