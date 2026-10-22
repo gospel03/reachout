@@ -1,6 +1,6 @@
 import { db, ensureSchema } from "@/db";
 import { questions } from "@/db/schema";
-import { isAdmin } from "@/lib/auth";
+import { isAdmin, isStaff } from "@/lib/auth";
 import { cluster } from "@/lib/similarity";
 import { asc, inArray } from "drizzle-orm";
 import { getDisplayState } from "@/lib/state";
@@ -11,7 +11,7 @@ const STATUSES = ["new", "starred", "answered", "hidden"] as const;
 const unauthorized = () => Response.json({ error: "Unauthorized" }, { status: 401 });
 
 export async function GET(req: Request) {
-  if (!(await isAdmin())) return unauthorized();
+  if (!(await isStaff())) return unauthorized();
   await ensureSchema();
   const { searchParams } = new URL(req.url);
   const threshold = Math.min(0.95, Math.max(0.2, Number(searchParams.get("threshold") ?? 0.5) || 0.5));
@@ -44,7 +44,7 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  if (!(await isAdmin())) return unauthorized();
+  if (!(await isStaff())) return unauthorized();
   const body = (await req.json().catch(() => ({}))) as { ids?: number[]; status?: string };
   const ids = (body.ids ?? []).filter((n) => Number.isInteger(n));
   if (!ids.length || !STATUSES.includes(body.status as (typeof STATUSES)[number]))

@@ -92,10 +92,10 @@ function QuestionSlide({ text, count }: { text: string; count: number }) {
         <span className="text-[1.3vw] font-semibold uppercase tracking-[0.5em] text-sky-300">Question</span>
         <span className="h-[2px] w-[5vw] bg-sky-glow" />
       </div>
-      <div className="relative mt-[2.5vw]">
-        <span className="pointer-events-none absolute -left-[3vw] -top-[5vw] font-display text-[12vw] leading-none text-sky-glow/25">“</span>
+      <div className="relative mt-[2.5vw] rounded-[2vw] border border-sky-glow/40 bg-[#020a1c]/90 px-[4vw] py-[3.5vw] shadow-[0_20px_80px_rgba(0,0,0,0.65)]">
+        <span className="pointer-events-none absolute -left-[1.5vw] -top-[4.5vw] font-display text-[10vw] leading-none text-sky-glow/60">“</span>
         <p
-          className="animate-rise font-bold leading-[1.2] text-white drop-shadow-[0_6px_30px_rgba(0,0,0,0.6)]"
+          className="animate-rise font-bold leading-[1.25] text-white"
           style={{ fontSize: size, animationDelay: "120ms" }}
         >
           {text}

@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { ADMIN_COOKIE, adminConfigured, checkPassword, sessionToken } from "@/lib/auth";
+import { ADMIN_COOKIE, STAGE_COOKIE, adminConfigured, checkPassword, checkStagePassword, sessionToken, stageToken } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +18,9 @@ export async function POST(req: Request) {
   if (recent.length >= 10) return Response.json({ error: "Too many attempts. Wait 5 minutes." }, { status: 429 });
 
   const body = (await req.json().catch(() => ({}))) as { password?: string };
-  if (!body.password || !checkPassword(body.password)) {
+  const isAdminPw = !!body.password && checkPassword(body.password);
+  const isStagePw = !isAdminPw && !!body.password && checkStagePassword(body.password);
+  if (!isAdminPw && !isStagePw) {
     recent.push(now);
     fails.set(ip, recent);
     if (fails.size > 2000) fails.clear();
@@ -27,7 +29,7 @@ export async function POST(req: Request) {
   }
   fails.delete(ip);
   const store = await cookies();
-  store.set(ADMIN_COOKIE, sessionToken(), {
+  store.set(isAdminPw ? ADMIN_COOKIE : STAGE_COOKIE, isAdminPw ? sessionToken() : stageToken(), {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production" && !!process.env.VERCEL,
@@ -40,5 +42,6 @@ export async function POST(req: Request) {
 export async function DELETE() {
   const store = await cookies();
   store.delete(ADMIN_COOKIE);
+  store.delete(STAGE_COOKIE);
   return Response.json({ ok: true });
 }

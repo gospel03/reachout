@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { MinistryLogo } from "./Brand";
 
-export default function AdminLogin({ notConfigured }: { notConfigured: boolean }) {
+export default function AdminLogin({ notConfigured, title = "Q&A CONTROL ROOM", hint = "Organisers only.", placeholder = "Admin password" }: { notConfigured: boolean; title?: string; hint?: string; placeholder?: string }) {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -32,8 +32,8 @@ export default function AdminLogin({ notConfigured }: { notConfigured: boolean }
     <main className="bg-scene grid min-h-screen place-items-center px-6">
       <form onSubmit={login} className="glass w-full max-w-sm rounded-3xl p-8 animate-rise">
         <MinistryLogo className="h-12" />
-        <h1 className="mt-6 font-display text-3xl tracking-wide">Q&amp;A CONTROL ROOM</h1>
-        <p className="mt-1 text-sm text-white/60">Organisers only.</p>
+        <h1 className="mt-6 font-display text-3xl tracking-wide">{title}</h1>
+        <p className="mt-1 text-sm text-white/60">{hint}</p>
         <input
           type="password"
           autoFocus
@@ -43,7 +43,7 @@ export default function AdminLogin({ notConfigured }: { notConfigured: boolean }
           autoComplete="current-password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Admin password"
+          placeholder={placeholder}
           className="mt-6 w-full rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-white placeholder:text-white/40 focus:border-sky-glow focus:outline-none"
         />
         {error && <p className="mt-2 text-sm text-red-300">{error}</p>}

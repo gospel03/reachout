@@ -41,3 +41,21 @@ export async function isAdmin(): Promise<boolean> {
   const value = store.get(ADMIN_COOKIE)?.value;
   return !!value && safeEqual(value, sessionToken());
 }
+
+// ---- Stagemaster (optional separate password; admin password also works) ----
+export const STAGE_COOKIE = "qa_stage";
+export function stagePassword(): string { return clean(process.env.STAGE_PASSWORD); }
+export function stageConfigured(): boolean { return stagePassword().length >= 6; }
+export function stageToken(): string {
+  return createHmac("sha256", secret()).update(`stage:${stagePassword()}`).digest("hex");
+}
+export function checkStagePassword(input: string): boolean {
+  return stageConfigured() && safeEqual(clean(input), stagePassword());
+}
+/** Admin OR stage person: may view questions, put one on screen, mark answered. */
+export async function isStaff(): Promise<boolean> {
+  if (await isAdmin()) return true;
+  if (!stageConfigured()) return false;
+  const v = (await cookies()).get(STAGE_COOKIE)?.value;
+  return !!v && safeEqual(v, stageToken());
+}
